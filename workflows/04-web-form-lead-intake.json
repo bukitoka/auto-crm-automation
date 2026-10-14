@@ -1,0 +1,59 @@
+{
+  "id": "autoCrmWebForm01",
+  "name": "Auto CRM · Web form → new lead",
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "nodes": [
+    {
+      "id": "b1f0a1e0-0004-4a00-9000-000000000001",
+      "name": "Contact form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [0, 0],
+      "webhookId": "b1f0a1e0-0004-4a00-9000-0000000000a1",
+      "parameters": {
+        "path": "auto-crm/contact-us",
+        "formTitle": "Contact us",
+        "formDescription": "Leave your details and we will get back to you.",
+        "formFields": {
+          "values": [
+            { "fieldLabel": "First name", "requiredField": true },
+            { "fieldLabel": "Last name" },
+            { "fieldLabel": "Email", "fieldType": "email", "requiredField": true },
+            { "fieldLabel": "Phone" },
+            { "fieldLabel": "Company" },
+            { "fieldLabel": "Message", "fieldType": "textarea" }
+          ]
+        },
+        "responseMode": "onReceived",
+        "options": {
+          "respondWithOptions": {
+            "values": { "formSubmittedText": "Thanks! We'll be in touch soon." }
+          }
+        }
+      }
+    },
+    {
+      "id": "b1f0a1e0-0004-4a00-9000-000000000002",
+      "name": "Create lead in CRM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AUTO_CRM_API_URL }}/integrations/leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "X-API-Key", "value": "={{ $env.AUTO_CRM_API_KEY }}" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  first_name: $json['First name'],\n  last_name: $json['Last name'] || null,\n  email: $json['Email'],\n  phone: $json['Phone'] || null,\n  company_name: $json['Company'] || null,\n  message: $json['Message'] || null,\n  source: 'web_form'\n}) }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Contact form": { "main": [[{ "node": "Create lead in CRM", "type": "main", "index": 0 }]] }
+  }
+}
