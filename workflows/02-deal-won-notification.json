@@ -1,0 +1,91 @@
+{
+  "id": "autoCrmDealWon01",
+  "name": "Auto CRM · Deal won → team notification",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "nodes": [
+    {
+      "id": "b1f0a1e0-0002-4a00-9000-000000000001",
+      "name": "deal.won",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "b1f0a1e0-0002-4a00-9000-0000000000a1",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "auto-crm/deal-won",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "b1f0a1e0-0002-4a00-9000-000000000002",
+      "name": "Build message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "mode": "runOnceForEachItem",
+        "jsCode": "// The CRM sends { event, occurred_at, data } — data is the deal.\nconst deal = $json.body.data;\n\nconst amount = new Intl.NumberFormat('en-US', {\n  style: 'currency',\n  currency: deal.currency || 'USD',\n}).format(deal.value ?? 0);\n\nconst contact = deal.contact\n  ? `${deal.contact.first_name} ${deal.contact.last_name ?? ''}`.trim()\n  : 'n/a';\n\nreturn {\n  json: {\n    subject: `🎉 Deal won: ${deal.title} (${amount})`,\n    text: [\n      `Deal: ${deal.title}`,\n      `Value: ${amount}`,\n      `Company: ${deal.company?.name ?? 'n/a'}`,\n      `Contact: ${contact}`,\n      `Owner: ${deal.owner?.full_name ?? 'n/a'}`,\n    ].join('\\n'),\n  },\n};\n"
+      }
+    },
+    {
+      "id": "b1f0a1e0-0002-4a00-9000-000000000003",
+      "name": "Send email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        440,
+        0
+      ],
+      "notes": "Uses the \"Mailpit SMTP\" credential (see credentials/). Swap it for your real SMTP provider in production.",
+      "parameters": {
+        "fromEmail": "={{ $env.NOTIFY_EMAIL_FROM }}",
+        "toEmail": "={{ $env.NOTIFY_EMAIL_TO }}",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.text }}",
+        "options": {}
+      },
+      "credentials": {
+        "smtp": {
+          "id": "mailpitSmtpCred1",
+          "name": "Mailpit SMTP"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "deal.won": {
+      "main": [
+        [
+          {
+            "node": "Build message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build message": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
