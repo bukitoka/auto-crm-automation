@@ -1,0 +1,26 @@
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:2.42.7
+    container_name: auto-crm-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    env_file: .env
+    environment:
+      GENERIC_TIMEZONE: ${TIMEZONE}
+      TZ: ${TIMEZONE}
+      WEBHOOK_URL: http://localhost:5678/
+      # Workflows read AUTO_CRM_API_URL / AUTO_CRM_API_KEY via $env.
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      N8N_RUNNERS_ENABLED: "true"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+    extra_hosts:
+      # Lets the container reach the FastAPI server running on your machine (Linux needs this line).
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./workflows:/home/node/workflows:ro
+      - ./credentials:/home/node/credentials:ro
+
+volumes:
+  n8n_data:
