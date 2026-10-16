@@ -18,8 +18,14 @@ Open http://localhost:5678, create the owner account, and switch each workflow t
 subscribe the workflows to CRM events, either on the CRM's Automations page or with
 `./scripts/register-webhooks.sh` (it asks for the super admin login).
 
-Emails from the workflows go to Mailpit (http://localhost:8026). For real email, edit the Mailpit
-SMTP credential in n8n.
+Workflows send email through the API's `/emails/notify`, so they use whatever mail backend the API
+has (Brevo). n8n needs no mail credential.
+
+## Production
+`.github/workflows/deploy.yml` copies `docker-compose.prod.yml` and the workflows to the Lighthouse
+server and restarts n8n. Create `~/apps/auto-crm-automation/.env` from `.env.production.example`
+first. n8n listens on the server's loopback only; open it with
+`ssh -L 5678:127.0.0.1:5678 user@server` and visit http://localhost:5678.
 
 ## The workflows
 

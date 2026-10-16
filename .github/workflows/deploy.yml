@@ -1,0 +1,104 @@
+name: Deploy Automations to Tencent Cloud Lighthouse
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: automation-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  validate:
+    name: Validate workflows and compose file
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Workflow JSON is valid
+        run: |
+          for file in workflows/*.json; do
+            jq -e '.id and .name and (.nodes | length > 0)' "$file" > /dev/null || { echo "Invalid: $file"; exit 1; }
+          done
+
+      - name: No secrets in workflows
+        run: |
+          if grep -rEn '(xkeysib-|xsmtpsib-|sk-[A-Za-z0-9]{20,}|nsk_|nak_)' workflows; then
+            echo "Secret found in a workflow. Read it from \$env instead."; exit 1
+          fi
+
+      - name: Compose file is valid
+        run: TIMEZONE=UTC docker compose -f docker-compose.prod.yml config -q
+
+  deploy:
+    name: Deploy to Lighthouse
+    needs: validate
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    concurrency:
+      group: deploy-automation
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Copy compose file and workflows
+        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          fingerprint: ${{ secrets.SERVER_FINGERPRINT }}
+          source: "docker-compose.prod.yml,workflows/*.json"
+          target: apps/auto-crm-automation
+
+      - name: Restart n8n and import workflows
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          fingerprint: ${{ secrets.SERVER_FINGERPRINT }}
+          script_stop: true
+          script: |
+            cd ~/apps/auto-crm-automation
+            test -f .env || { echo "Missing ~/apps/auto-crm-automation/.env"; exit 1; }
+
+            docker network create auto-crm-net 2>/dev/null || true
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+            for i in $(seq 1 30); do
+              status=$(docker inspect --format '{{ .State.Health.Status }}' auto-crm-n8n 2>/dev/null || echo missing)
+              [ "$status" = healthy ] && break
+              sleep 5
+            done
+            if [ "$status" != healthy ]; then
+              echo "n8n did not become healthy (status: $status)"
+              docker logs --tail 80 auto-crm-n8n
+              exit 1
+            fi
+
+            # Importing resets workflows to inactive, so publish again whatever was active.
+            active=$(docker exec auto-crm-n8n n8n list:workflow --active=true --onlyId)
+            docker exec auto-crm-n8n n8n import:workflow --separate --input=/home/node/workflows
+            for id in $active; do
+              docker exec auto-crm-n8n n8n publish:workflow --id="$id"
+            done
+            docker restart auto-crm-n8n > /dev/null
+
+            docker image prune -f
+            docker ps --filter name=auto-crm-n8n
