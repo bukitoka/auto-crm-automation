@@ -35,7 +35,7 @@
       "parameters": {
         "language": "javaScript",
         "mode": "runOnceForEachItem",
-        "jsCode": "// The CRM sends { event, occurred_at, data } — data is the deal.\nconst deal = $json.body.data;\n\nconst amount = new Intl.NumberFormat('en-US', {\n  style: 'currency',\n  currency: deal.currency || 'USD',\n}).format(deal.value ?? 0);\n\nconst contact = deal.contact\n  ? `${deal.contact.first_name} ${deal.contact.last_name ?? ''}`.trim()\n  : 'n/a';\n\nreturn {\n  json: {\n    subject: `🎉 Deal won: ${deal.title} (${amount})`,\n    text: [\n      `Deal: ${deal.title}`,\n      `Value: ${amount}`,\n      `Company: ${deal.company?.name ?? 'n/a'}`,\n      `Contact: ${contact}`,\n      `Owner: ${deal.owner?.full_name ?? 'n/a'}`,\n    ].join('\\n'),\n  },\n};\n"
+        "jsCode": "// The CRM sends { event, occurred_at, data }, where data is the deal.\nconst deal = $json.body.data;\n\nconst amount = new Intl.NumberFormat('en-US', {\n  style: 'currency',\n  currency: deal.currency || 'USD',\n}).format(deal.value ?? 0);\n\nconst contact = deal.contact\n  ? `${deal.contact.first_name} ${deal.contact.last_name ?? ''}`.trim()\n  : 'n/a';\n\nreturn {\n  json: {\n    subject: `Deal won: ${deal.title} (${amount})`,\n    text: [\n      `Deal: ${deal.title}`,\n      `Value: ${amount}`,\n      `Company: ${deal.company?.name ?? 'n/a'}`,\n      `Contact: ${contact}`,\n      `Owner: ${deal.owner?.full_name ?? 'n/a'}`,\n    ].join('\\n'),\n  },\n};\n"
       }
     },
     {

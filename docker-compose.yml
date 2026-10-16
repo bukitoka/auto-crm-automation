@@ -10,7 +10,7 @@ services:
       GENERIC_TIMEZONE: ${TIMEZONE}
       TZ: ${TIMEZONE}
       WEBHOOK_URL: http://localhost:5678/
-      # Workflows read AUTO_CRM_API_URL / AUTO_CRM_API_KEY via $env.
+      # Workflows read AUTO_CRM_API_URL, AUTO_CRM_API_KEY and AUTO_CRM_LEAD_OWNER_ID via $env.
       N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
       N8N_RUNNERS_ENABLED: "true"
       N8N_DIAGNOSTICS_ENABLED: "false"

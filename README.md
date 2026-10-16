@@ -16,7 +16,7 @@ docker compose up -d
 
 Open http://localhost:5678, create the owner account, and switch each workflow to Active. Then
 subscribe the workflows to CRM events, either on the CRM's Automations page or with
-`./scripts/register-webhooks.sh` (it asks for an admin login).
+`./scripts/register-webhooks.sh` (it asks for the super admin login).
 
 Emails from the workflows go to Mailpit (http://localhost:8026). For real email, edit the Mailpit
 SMTP credential in n8n.
@@ -31,6 +31,12 @@ SMTP credential in n8n.
 | Web form intake | Someone fills in the n8n form | Creates a lead in the CRM, which then gets scored |
 
 ## Good to know
+
+- The workflows call the CRM with the API key, a service account that is not tied to one admin.
+  It can read and write every record, so keep the key private. New leads and follow-up tasks go
+  to the contact owner (`owner_id`), never to the service account.
+- Web form leads go to the admin set in `AUTO_CRM_LEAD_OWNER_ID`. Without it the lead belongs to
+  the service account, which no admin can see.
 
 - Webhook requests carry an `X-AutoCRM-Signature` header (HMAC-SHA256 of the body with the
   subscription secret). The starter workflows don't check it; add that before exposing n8n

@@ -48,7 +48,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  first_name: $json['First name'],\n  last_name: $json['Last name'] || null,\n  email: $json['Email'],\n  phone: $json['Phone'] || null,\n  company_name: $json['Company'] || null,\n  message: $json['Message'] || null,\n  source: 'web_form'\n}) }}",
+        "jsonBody": "={{ JSON.stringify({\n  first_name: $json['First name'],\n  last_name: $json['Last name'] || null,\n  email: $json['Email'],\n  phone: $json['Phone'] || null,\n  company_name: $json['Company'] || null,\n  message: $json['Message'] || null,\n  owner_id: $env.AUTO_CRM_LEAD_OWNER_ID || null,\n  source: 'web_form'\n}) }}",
         "options": {}
       }
     }

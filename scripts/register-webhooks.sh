@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Subscribe the n8n webhook workflows to Auto CRM events.
-# Managing webhooks is admin-only, so this logs in with an admin account (not the n8n API key).
+# Managing webhooks is super admin only, so this logs in with the super admin account (not the n8n API key).
 # The CRM API runs on your machine, so it reaches n8n at localhost:5678.
 #
 # Usage: ./scripts/register-webhooks.sh            (production webhook URLs, workflow must be Active)
@@ -11,8 +11,8 @@ API_URL="${CRM_API_URL:-http://localhost:8000/api/v1}"
 N8N_URL="${N8N_URL:-http://localhost:5678}"
 PREFIX="${WEBHOOK_PREFIX:-webhook}"
 
-read -rp "CRM admin email: " ADMIN_EMAIL
-read -rsp "CRM admin password: " ADMIN_PASSWORD
+read -rp "CRM super admin email: " ADMIN_EMAIL
+read -rsp "CRM super admin password: " ADMIN_PASSWORD
 echo
 
 TOKEN=$(curl -sSf -X POST "$API_URL/auth/login" \

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Export workflows edited in the n8n UI back into ./workflows so they can be committed.
-# Exported files are named by workflow id — rename them if you like.
+# Exported files are named by workflow id; rename them if you like.
 set -euo pipefail
 
 CONTAINER="${CONTAINER:-auto-crm-n8n}"

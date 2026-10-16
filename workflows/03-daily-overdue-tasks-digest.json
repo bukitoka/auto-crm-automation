@@ -106,7 +106,7 @@
       "parameters": {
         "language": "javaScript",
         "mode": "runOnceForAllItems",
-        "jsCode": "// Group overdue tasks by assignee and build a plain-text digest.\nconst { items: tasks, total } = $input.first().json;\n\nconst byAssignee = {};\nfor (const task of tasks) {\n  const name = task.assignee?.full_name ?? 'Unassigned';\n  (byAssignee[name] ??= []).push(task);\n}\n\nconst sections = Object.entries(byAssignee).map(([name, list]) => {\n  const lines = list.map(\n    (t) => `  • [${t.priority}] ${t.title} — due ${new Date(t.due_date).toLocaleDateString()}`,\n  );\n  return `${name} (${list.length})\\n${lines.join('\\n')}`;\n});\n\nreturn [\n  {\n    json: {\n      subject: `Auto CRM: ${total} overdue task(s)`,\n      text: sections.join('\\n\\n'),\n    },\n  },\n];\n"
+        "jsCode": "// Group overdue tasks by assignee and build a plain-text digest.\nconst { items: tasks, total } = $input.first().json;\n\nconst byAssignee = {};\nfor (const task of tasks) {\n  const name = task.assignee?.full_name ?? 'Unassigned';\n  (byAssignee[name] ??= []).push(task);\n}\n\nconst sections = Object.entries(byAssignee).map(([name, list]) => {\n  const lines = list.map(\n    (t) => `  • [${t.priority}] ${t.title} due ${new Date(t.due_date).toLocaleDateString()}`,\n  );\n  return `${name} (${list.length})\\n${lines.join('\\n')}`;\n});\n\nreturn [\n  {\n    json: {\n      subject: `Auto CRM: ${total} overdue task(s)`,\n      text: sections.join('\\n\\n'),\n    },\n  },\n];\n"
       }
     },
     {
