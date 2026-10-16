@@ -36,7 +36,10 @@ jobs:
           fi
 
       - name: Compose file is valid
-        run: TIMEZONE=UTC docker compose -f docker-compose.prod.yml config -q
+        run: |
+          cp .env.example .env
+          TIMEZONE=Asia/Singapore docker compose -f docker-compose.prod.yml config -q
+          rm -f .env
 
   deploy:
     name: Deploy to Lighthouse
