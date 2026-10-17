@@ -96,10 +96,10 @@ jobs:
             fi
 
             # Importing resets workflows to inactive, so publish again whatever was active.
-            active=$(docker exec auto-crm-n8n n8n list:workflow --active=true --onlyId)
+            active=$(docker exec auto-crm-n8n n8n list:workflow --active=true --onlyId 2>/dev/null || true)
             docker exec auto-crm-n8n n8n import:workflow --separate --input=/home/node/workflows
             for id in $active; do
-              docker exec auto-crm-n8n n8n publish:workflow --id="$id"
+              docker exec auto-crm-n8n n8n publish:workflow --id="$id" 2>/dev/null || true
             done
             docker restart auto-crm-n8n > /dev/null
 
