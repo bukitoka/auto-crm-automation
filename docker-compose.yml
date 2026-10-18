@@ -4,7 +4,7 @@ services:
     container_name: auto-crm-n8n
     restart: unless-stopped
     ports:
-      - "5678:5678"
+      - "127.0.0.1:5678:5678"
     env_file: .env
     environment:
       GENERIC_TIMEZONE: ${TIMEZONE}
@@ -14,12 +14,28 @@ services:
       N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
       N8N_RUNNERS_ENABLED: "true"
       N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      # Keeps the local database small; production keeps two weeks.
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: "72"
     extra_hosts:
       # Lets the container reach the FastAPI server running on your machine (Linux needs this line).
       - "host.docker.internal:host-gateway"
     volumes:
       - n8n_data:/home/node/.n8n
       - ./workflows:/home/node/workflows:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5678/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
 
 volumes:
   n8n_data:
